@@ -22,6 +22,7 @@ import {
   AlertTriangle,
   Receipt,
   LogOut,
+  Wallet,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -44,10 +45,15 @@ const navigation = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Products", href: "/dashboard/products", icon: Package },
   { label: "Sales", href: "/dashboard/sales", icon: ShoppingCart },
+  { label: "Inventory", href: "/dashboard/inventory", icon: Package },
+   { label: "Suppliers", href: "/dashboard/suppliers", icon: Truck },
+  { label: "Purchases", href: "/dashboard/purchases", icon: Wallet },
+  { label: "Expenses", href: "/dashboard/expenses", icon: DollarSign },
   { label: "Customers", href: "/dashboard/customers", icon: Users },
   { label: "Suppliers", href: "/dashboard/suppliers", icon: Truck },
   { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
+
 ];
 
 const salesData = [
