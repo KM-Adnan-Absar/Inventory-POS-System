@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import { getCurrentUser } from "@/src/lib/require-auth";
 import { hasPermission } from "@/src/lib/permissions";
+import { createActivityLog } from "@/src/lib/create-activity-log";
 
 // GET: Get all expenses
 export async function GET() {
@@ -121,6 +122,21 @@ export async function POST(request: NextRequest) {
         paymentMethod,
         expenseDate: expenseDate ? new Date(expenseDate) : new Date(),
         createdById: user.id,
+      },
+    });
+
+    // Create Expense Activity Log
+    await createActivityLog({
+      userId: user.id,
+      action: "CREATE",
+      entity: "EXPENSE",
+      entityId: String(expense.id),
+      description: `Created expense: ${expense.title}`,
+      metadata: {
+        title: expense.title,
+        category: expense.category,
+        amount: expense.amount.toString(),
+        paymentMethod: expense.paymentMethod,
       },
     });
 

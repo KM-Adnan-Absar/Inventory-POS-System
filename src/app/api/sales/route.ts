@@ -1,7 +1,9 @@
+
 import { NextResponse } from "next/server";
 import { PaymentMethod, Prisma } from "@/src/generated/prisma/client";
 import prisma from "@/src/lib/prisma";
 import { requireSalePermission } from "@/src/lib/sales-auth";
+import { createActivityLog } from "@/src/lib/create-activity-log";
 
 const allowedPaymentMethods = Object.values(PaymentMethod);
 
@@ -91,6 +93,7 @@ export async function GET() {
     );
   }
 }
+
 export async function POST(request: Request) {
   try {
     // 1. Check permission
@@ -182,7 +185,6 @@ export async function POST(request: Request) {
           }
 
           const unitPrice = product.sellingPrice;
-
           const lineTotal = unitPrice.mul(item.quantity);
 
           subtotal = subtotal.add(lineTotal);
@@ -228,7 +230,6 @@ export async function POST(request: Request) {
         }
 
         const total = subtotal.sub(discountAmount);
-
         const paid = new Prisma.Decimal(paidAmount);
 
         if (paid.lessThan(total)) {
@@ -265,7 +266,22 @@ export async function POST(request: Request) {
       }
     );
 
-    // 11. Return response
+    // 11. Save activity log
+    await createActivityLog({
+      userId: user.id,
+      action: "CREATE",
+      entity: "SALE",
+      entityId: String(result.id),
+      description: `Completed sale: ${result.invoiceNumber}`,
+      metadata: {
+        invoiceNumber: result.invoiceNumber,
+        total: result.total.toString(),
+        paymentMethod: result.paymentMethod,
+        itemCount: result.items.length,
+      },
+    });
+
+    // 12. Return response
     return NextResponse.json(
       {
         message: "Sale completed successfully.",

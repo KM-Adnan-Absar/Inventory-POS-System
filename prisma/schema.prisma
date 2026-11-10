@@ -75,6 +75,7 @@ model User {
   inventoryMovements InventoryMovement[]
   purchases Purchase[]
   expenses Expense[]
+  activityLogs ActivityLog[]
   @@unique([email])
   @@map("user")
 }
@@ -275,4 +276,21 @@ model Expense {
   @@index([category])
   @@index([createdById])
   @@index([expenseDate])
+}
+
+model ActivityLog {
+  id          Int      @id @default(autoincrement())
+  userId      String
+  action      String
+  entity      String
+  entityId    String?
+  description String?
+  metadata    Json?
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([createdAt])
 }

@@ -2,6 +2,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import { requireProductPermission } from "@/src/lib/api-auth";
+import { getCurrentUser } from "@/src/lib/require-auth";
+import { createActivityLog } from "@/src/lib/create-activity-log";
 import { productSchema } from "@/src/lib/validations/product";
 
 export async function GET() {
@@ -60,6 +62,15 @@ export async function POST(request: Request) {
 
     if (access.response) return access.response;
 
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { message: "Unauthorized. Please login." },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const validation = productSchema.safeParse(body);
 
@@ -94,6 +105,20 @@ export async function POST(request: Request) {
             name: true,
           },
         },
+      },
+    });
+
+    // Save activity log
+    await createActivityLog({
+      userId: currentUser.id,
+      action: "CREATE",
+      entity: "PRODUCT",
+      entityId: String(product.id),
+      description: `Created product: ${product.name}`,
+      metadata: {
+        productName: product.name,
+        sku: product.sku,
+        sellingPrice: product.sellingPrice.toString(),
       },
     });
 

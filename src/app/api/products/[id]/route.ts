@@ -1,9 +1,9 @@
 
 import { NextResponse } from "next/server";
-
-
 import prisma from "@/src/lib/prisma";
 import { requireProductPermission } from "@/src/lib/api-auth";
+import { getCurrentUser } from "@/src/lib/require-auth";
+import { createActivityLog } from "@/src/lib/create-activity-log";
 import { productSchema } from "@/src/lib/validations/product";
 
 type RouteContext = {
@@ -18,6 +18,15 @@ export async function PUT(
     const access = await requireProductPermission();
 
     if (access.response) return access.response;
+
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { message: "Unauthorized. Please login." },
+        { status: 401 }
+      );
+    }
 
     const { id } = await context.params;
     const body = await request.json();
@@ -35,18 +44,17 @@ export async function PUT(
     }
 
     const data = validation.data;
-const productId = Number(id);
+    const productId = Number(id);
 
-if (!Number.isSafeInteger(productId) || productId <= 0) {
-  return NextResponse.json(
-    { message: "Invalid product ID." },
-    { status: 400 }
-  );
-}
+    if (!Number.isSafeInteger(productId) || productId <= 0) {
+      return NextResponse.json(
+        { message: "Invalid product ID." },
+        { status: 400 }
+      );
+    }
 
     const product = await prisma.product.update({
       where: { id: productId },
-     
       data: {
         name: data.name,
         sku: data.sku,
@@ -65,6 +73,20 @@ if (!Number.isSafeInteger(productId) || productId <= 0) {
             name: true,
           },
         },
+      },
+    });
+
+    // Save activity log
+    await createActivityLog({
+      userId: currentUser.id,
+      action: "UPDATE",
+      entity: "PRODUCT",
+      entityId: String(product.id),
+      description: `Updated product: ${product.name}`,
+      metadata: {
+        productName: product.name,
+        sku: product.sku,
+        sellingPrice: product.sellingPrice.toString(),
       },
     });
 
@@ -118,10 +140,57 @@ export async function DELETE(
 
     if (access.response) return access.response;
 
+    const currentUser = await getCurrentUser();
+
+    if (!currentUser) {
+      return NextResponse.json(
+        { message: "Unauthorized. Please login." },
+        { status: 401 }
+      );
+    }
+
     const { id } = await context.params;
+    const productId = Number(id);
+
+    if (!Number.isSafeInteger(productId) || productId <= 0) {
+      return NextResponse.json(
+        { message: "Invalid product ID." },
+        { status: 400 }
+      );
+    }
+
+    // Fetch product before deleting it
+    const existingProduct = await prisma.product.findUnique({
+      where: { id: productId },
+      select: {
+        id: true,
+        name: true,
+        sku: true,
+      },
+    });
+
+    if (!existingProduct) {
+      return NextResponse.json(
+        { message: "Product not found." },
+        { status: 404 }
+      );
+    }
 
     await prisma.product.delete({
-      where: { id: Number(id) },
+      where: { id: productId },
+    });
+
+    // Save activity log
+    await createActivityLog({
+      userId: currentUser.id,
+      action: "DELETE",
+      entity: "PRODUCT",
+      entityId: String(existingProduct.id),
+      description: `Deleted product: ${existingProduct.name}`,
+      metadata: {
+        productName: existingProduct.name,
+        sku: existingProduct.sku,
+      },
     });
 
     return NextResponse.json({

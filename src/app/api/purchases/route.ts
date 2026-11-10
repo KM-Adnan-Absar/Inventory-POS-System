@@ -1,10 +1,10 @@
-
 import { NextRequest, NextResponse } from "next/server";
 import { Prisma } from "@/src/generated/prisma/client";
 
 import prisma from "@/src/lib/prisma";
 import { getCurrentUser } from "@/src/lib/require-auth";
 import { hasPermission } from "@/src/lib/permissions";
+import { createActivityLog } from "@/src/lib/create-activity-log";
 
 export async function GET() {
   try {
@@ -95,10 +95,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (
-      !Array.isArray(items) ||
-      items.length === 0
-    ) {
+    if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
         { message: "At least one product is required." },
         { status: 400 }
@@ -255,6 +252,23 @@ export async function POST(request: NextRequest) {
       }
 
       return purchase;
+    });
+
+    // Create Purchase Activity Log
+    await createActivityLog({
+      userId: user.id,
+      action: "CREATE",
+      entity: "PURCHASE",
+      entityId: String(result.id),
+      description: `Created purchase: ${result.invoiceNumber}`,
+      metadata: {
+        invoiceNumber: result.invoiceNumber,
+        supplierId: result.supplierId,
+        supplierName: result.supplier.name,
+        total: result.total.toString(),
+        paidAmount: result.paidAmount.toString(),
+        itemCount: result.items.length,
+      },
     });
 
     return NextResponse.json(
