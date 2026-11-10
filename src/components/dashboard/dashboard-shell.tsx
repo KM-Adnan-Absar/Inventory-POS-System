@@ -43,10 +43,11 @@ type DashboardShellProps = {
 
 const navigation = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+    { label: "User Management", href: "/dashboard/users", icon: Users },
   { label: "Products", href: "/dashboard/products", icon: Package },
   { label: "Sales", href: "/dashboard/sales", icon: ShoppingCart },
   { label: "Inventory", href: "/dashboard/inventory", icon: Package },
-   { label: "Suppliers", href: "/dashboard/suppliers", icon: Truck },
+   
   { label: "Purchases", href: "/dashboard/purchases", icon: Wallet },
   { label: "Expenses", href: "/dashboard/expenses", icon: DollarSign },
   { label: "Customers", href: "/dashboard/customers", icon: Users },

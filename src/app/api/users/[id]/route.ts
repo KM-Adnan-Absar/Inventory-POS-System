@@ -67,6 +67,28 @@ export async function PATCH(
       );
     }
 
+    // Only SUPER_ADMIN can assign SUPER_ADMIN role
+if (
+  role === "SUPER_ADMIN" &&
+  currentUser.role !== "SUPER_ADMIN"
+) {
+  return NextResponse.json(
+    { message: "Only SUPER_ADMIN can assign this role." },
+    { status: 403 }
+  );
+}
+
+// ADMIN cannot modify a SUPER_ADMIN account
+if (
+  existingUser.role === "SUPER_ADMIN" &&
+  currentUser.role !== "SUPER_ADMIN"
+) {
+  return NextResponse.json(
+    { message: "You cannot modify a SUPER_ADMIN account." },
+    { status: 403 }
+  );
+}
+
     const updatedUser = await prisma.user.update({
       where: { id },
       data: { role },
