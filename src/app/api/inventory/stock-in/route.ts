@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { InventoryMovementType } from "@/src/generated/prisma/client";
+
 import prisma from "@/src/lib/prisma";
 import { getCurrentUser } from "@/src/lib/require-auth";
 import { hasPermission } from "@/src/lib/permissions";
+import { createActivityLog } from "@/src/lib/create-activity-log";
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,6 +83,8 @@ export async function POST(request: NextRequest) {
       return {
         product: updatedProduct,
         movement,
+        previousStock,
+        newStock,
       };
     });
 
@@ -91,7 +95,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 6. Success response
+    // 6. Create Activity Log
+    await createActivityLog({
+      userId: user.id,
+      action: "STOCK_IN",
+      entity: "INVENTORY",
+      entityId: String(result.product.id),
+      description: `Stock added: ${result.product.name}`,
+      metadata: {
+        productId: result.product.id,
+        productName: result.product.name,
+        quantity,
+        previousStock: result.previousStock,
+        newStock: result.newStock,
+        note: note ?? "",
+      },
+    });
+
+    // 7. Success response
     return NextResponse.json({
       message: "Stock added successfully.",
       product: {

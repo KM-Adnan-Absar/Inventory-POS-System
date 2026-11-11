@@ -21,8 +21,8 @@ import {
   Boxes,
   AlertTriangle,
   Receipt,
-  LogOut,
   Wallet,
+  History,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -43,18 +43,17 @@ type DashboardShellProps = {
 
 const navigation = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { label: "User Management", href: "/dashboard/users", icon: Users },
+  { label: "User Management", href: "/dashboard/users", icon: Users },
+  { label: "Activity Logs", href: "/dashboard/activity-logs", icon: History },
   { label: "Products", href: "/dashboard/products", icon: Package },
   { label: "Sales", href: "/dashboard/sales", icon: ShoppingCart },
   { label: "Inventory", href: "/dashboard/inventory", icon: Package },
-   
   { label: "Purchases", href: "/dashboard/purchases", icon: Wallet },
   { label: "Expenses", href: "/dashboard/expenses", icon: DollarSign },
   { label: "Customers", href: "/dashboard/customers", icon: Users },
   { label: "Suppliers", href: "/dashboard/suppliers", icon: Truck },
   { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
-
 ];
 
 const salesData = [
@@ -83,10 +82,23 @@ const lowStockItems = [
 function Sidebar({
   open,
   close,
+  role,
 }: {
   open: boolean;
   close: () => void;
+  role: string;
 }) {
+  const filteredNavigation = navigation.filter((item) => {
+    if (
+      item.label === "User Management" ||
+      item.label === "Activity Logs"
+    ) {
+      return ["SUPER_ADMIN", "ADMIN"].includes(role);
+    }
+
+    return true;
+  });
+
   return (
     <>
       {open && (
@@ -115,12 +127,12 @@ function Sidebar({
           </button>
         </div>
 
-        <nav className="flex-1 space-y-2 px-4 py-6">
+        <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-6">
           <p className="mb-4 px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">
             Main Menu
           </p>
 
-          {navigation.map((item) => (
+          {filteredNavigation.map((item) => (
             <Link
               key={item.label}
               href={item.href}
@@ -322,7 +334,11 @@ export default function DashboardShell({
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <Sidebar open={sidebarOpen} close={() => setSidebarOpen(false)} />
+      <Sidebar
+        open={sidebarOpen}
+        close={() => setSidebarOpen(false)}
+        role={role}
+      />
 
       <div className="min-h-screen lg:pl-64">
         <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-8">

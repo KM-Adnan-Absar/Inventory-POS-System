@@ -1,8 +1,9 @@
-
 import { NextRequest, NextResponse } from "next/server";
+
 import prisma from "@/src/lib/prisma";
 import { getCurrentUser } from "@/src/lib/require-auth";
 import { hasPermission } from "@/src/lib/permissions";
+import { createActivityLog } from "@/src/lib/create-activity-log";
 
 const allowedRoles = [
   "SUPER_ADMIN",
@@ -68,27 +69,28 @@ export async function PATCH(
     }
 
     // Only SUPER_ADMIN can assign SUPER_ADMIN role
-if (
-  role === "SUPER_ADMIN" &&
-  currentUser.role !== "SUPER_ADMIN"
-) {
-  return NextResponse.json(
-    { message: "Only SUPER_ADMIN can assign this role." },
-    { status: 403 }
-  );
-}
+    if (
+      role === "SUPER_ADMIN" &&
+      currentUser.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json(
+        { message: "Only SUPER_ADMIN can assign this role." },
+        { status: 403 }
+      );
+    }
 
-// ADMIN cannot modify a SUPER_ADMIN account
-if (
-  existingUser.role === "SUPER_ADMIN" &&
-  currentUser.role !== "SUPER_ADMIN"
-) {
-  return NextResponse.json(
-    { message: "You cannot modify a SUPER_ADMIN account." },
-    { status: 403 }
-  );
-}
+    // ADMIN cannot modify a SUPER_ADMIN account
+    if (
+      existingUser.role === "SUPER_ADMIN" &&
+      currentUser.role !== "SUPER_ADMIN"
+    ) {
+      return NextResponse.json(
+        { message: "You cannot modify a SUPER_ADMIN account." },
+        { status: 403 }
+      );
+    }
 
+    // Update user role
     const updatedUser = await prisma.user.update({
       where: { id },
       data: { role },
@@ -99,6 +101,23 @@ if (
         role: true,
       },
     });
+
+    // Create Activity Log only when role actually changes
+    if (existingUser.role !== updatedUser.role) {
+      await createActivityLog({
+        userId: currentUser.id,
+        action: "UPDATE_ROLE",
+        entity: "USER",
+        entityId: updatedUser.id,
+        description: `Updated role for ${updatedUser.name}`,
+        metadata: {
+          userName: updatedUser.name,
+          userEmail: updatedUser.email,
+          previousRole: existingUser.role ?? "CASHIER",
+          newRole: updatedUser.role ?? "CASHIER",
+        },
+      });
+    }
 
     return NextResponse.json({
       message: "User role updated successfully.",
