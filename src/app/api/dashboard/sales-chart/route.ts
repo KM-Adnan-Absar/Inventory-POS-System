@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import { getCurrentUser } from "@/src/lib/require-auth";
@@ -23,9 +22,11 @@ function getDhakaMidnight(dateKey: string) {
   return new Date(`${dateKey}T00:00:00+06:00`);
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  const requestHeaders = request.headers;
+
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUser(requestHeaders);
 
     if (!user) {
       return NextResponse.json(
@@ -36,11 +37,9 @@ export async function GET() {
 
     const todayKey = getDhakaDateKey(new Date());
 
-    const [year, month, day] = todayKey.split("-").map(Number);
-
-    // Last 7 calendar days, including today.
     const todayMidnight = getDhakaMidnight(todayKey);
 
+    // Last 7 calendar days, including today.
     const startDate = new Date(todayMidnight);
     startDate.setUTCDate(startDate.getUTCDate() - 6);
 
@@ -89,7 +88,6 @@ export async function GET() {
 
     const chartData = Array.from(salesMap.entries()).map(
       ([date, total]) => {
-        // Parse date key for a consistent weekday label.
         const [y, m, d] = date.split("-").map(Number);
         const dateObject = new Date(Date.UTC(y, m - 1, d));
 

@@ -6,9 +6,11 @@ import { getCurrentUser } from "@/src/lib/require-auth";
 import { hasPermission } from "@/src/lib/permissions";
 import { createActivityLog } from "@/src/lib/create-activity-log";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const requestHeaders = request.headers;
+
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUser(requestHeaders);
 
     if (!user) {
       return NextResponse.json(
@@ -63,8 +65,10 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const requestHeaders = request.headers;
+
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUser(requestHeaders);
 
     if (!user) {
       return NextResponse.json(

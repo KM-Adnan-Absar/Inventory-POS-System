@@ -3,9 +3,11 @@ import { redirect } from "next/navigation";
 
 import { auth } from "../lib/auth";
 
-export async function getCurrentUser() {
+export async function getCurrentUser(requestHeaders?: Headers) {
+  const currentHeaders = requestHeaders ?? (await headers());
+
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: currentHeaders,
   });
 
   return session?.user ?? null;

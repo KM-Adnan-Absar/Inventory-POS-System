@@ -4,10 +4,11 @@ import { NextResponse } from "next/server";
 import prisma from "@/src/lib/prisma";
 import { getCurrentUser } from "@/src/lib/require-auth";
 
-export async function GET() {
-  try {
-    const user = await getCurrentUser();
+export async function GET(request: Request) {
+  const requestHeaders = request.headers;
 
+  try {
+    const user = await getCurrentUser(requestHeaders);
     if (!user) {
       return NextResponse.json(
         { message: "Unauthorized. Please login." },

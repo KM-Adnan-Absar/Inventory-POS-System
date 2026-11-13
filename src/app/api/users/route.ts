@@ -3,9 +3,11 @@ import prisma from "@/src/lib/prisma";
 import { getCurrentUser } from "@/src/lib/require-auth";
 import { hasPermission } from "@/src/lib/permissions";
 
-export async function GET() {
+export async function GET(request: Request) {
+  const requestHeaders = request.headers;
+
   try {
-    const user = await getCurrentUser();
+    const user = await getCurrentUser(requestHeaders);
 
     if (!user) {
       return NextResponse.json(
