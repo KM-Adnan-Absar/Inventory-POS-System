@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent, type ChangeEvent } from "react";
 
 type Supplier = {
   id: number;
@@ -32,6 +32,9 @@ const initialForm: SupplierForm = {
   notes: "",
 };
 
+const inputClass =
+  "w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+
 export default function SupplierManagement() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [form, setForm] = useState<SupplierForm>(initialForm);
@@ -39,6 +42,7 @@ export default function SupplierManagement() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState("");
 
   async function fetchSuppliers() {
@@ -53,7 +57,9 @@ export default function SupplierManagement() {
         throw new Error(data.message || "Failed to load suppliers.");
       }
 
-      setSuppliers(data.suppliers ?? []);
+      setSuppliers(
+        Array.isArray(data.suppliers) ? data.suppliers : []
+      );
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Something went wrong."
@@ -69,7 +75,7 @@ export default function SupplierManagement() {
   }, []);
 
   function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) {
     const { name, value } = e.target;
 
@@ -99,7 +105,7 @@ export default function SupplierManagement() {
     setEditingId(null);
   }
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     try {
@@ -144,6 +150,7 @@ export default function SupplierManagement() {
     if (!confirmed) return;
 
     try {
+      setDeletingId(id);
       setError("");
 
       const res = await fetch(`/api/suppliers/${id}`, {
@@ -162,6 +169,8 @@ export default function SupplierManagement() {
       setError(
         err instanceof Error ? err.message : "Something went wrong."
       );
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -172,89 +181,130 @@ export default function SupplierManagement() {
   );
 
   return (
-    <div className="space-y-6">
+    <main className="mx-auto min-w-0 max-w-7xl space-y-5 sm:space-y-6">
+      {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">
+        <h1 className="text-xl font-bold text-slate-800 sm:text-2xl">
           Supplier Management
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-xs text-slate-500 sm:text-sm">
           Manage your suppliers and their contact information.
         </p>
       </div>
 
+      {/* Error Message */}
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
+        <div className="break-words rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600">
           {error}
         </div>
       )}
 
+      {/* Supplier Form */}
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-xl border bg-white p-5 shadow-sm"
+        className="min-w-0 space-y-4 rounded-xl border bg-white p-4 shadow-sm sm:p-6"
       >
-        <h2 className="text-lg font-semibold text-slate-800">
-          {editingId ? "Update Supplier" : "Add New Supplier"}
-        </h2>
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <input
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            placeholder="Supplier Name *"
-            required
-            maxLength={100}
-            className="rounded-lg border p-3 text-sm"
-          />
-
-          <input
-            name="companyName"
-            value={form.companyName}
-            onChange={handleChange}
-            placeholder="Company Name"
-            className="rounded-lg border p-3 text-sm"
-          />
-
-          <input
-            name="phone"
-            value={form.phone}
-            onChange={handleChange}
-            placeholder="Phone Number"
-            className="rounded-lg border p-3 text-sm"
-          />
-
-          <input
-            name="email"
-            type="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="Email Address"
-            className="rounded-lg border p-3 text-sm"
-          />
-
-          <input
-            name="address"
-            value={form.address}
-            onChange={handleChange}
-            placeholder="Address"
-            className="rounded-lg border p-3 text-sm"
-          />
-
-          <textarea
-            name="notes"
-            value={form.notes}
-            onChange={handleChange}
-            placeholder="Notes"
-            rows={2}
-            className="rounded-lg border p-3 text-sm"
-          />
+        <div>
+          <h2 className="text-base font-semibold text-slate-800 sm:text-lg">
+            {editingId ? "Update Supplier" : "Add New Supplier"}
+          </h2>
+          <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+            {editingId
+              ? "Update the supplier's contact information."
+              : "Enter the supplier's details below."}
+          </p>
         </div>
 
-        <div className="flex flex-wrap gap-3">
+        <div className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-3 sm:gap-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Supplier Name *
+            </label>
+            <input
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Enter supplier name"
+              required
+              maxLength={100}
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Company Name
+            </label>
+            <input
+              name="companyName"
+              value={form.companyName}
+              onChange={handleChange}
+              placeholder="Enter company name"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Phone Number
+            </label>
+            <input
+              name="phone"
+              value={form.phone}
+              onChange={handleChange}
+              placeholder="Enter phone number"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Email Address
+            </label>
+            <input
+              name="email"
+              type="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="Enter email address"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Address
+            </label>
+            <input
+              name="address"
+              value={form.address}
+              onChange={handleChange}
+              placeholder="Enter address"
+              className={inputClass}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
+              Notes
+            </label>
+            <textarea
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              placeholder="Additional information..."
+              rows={2}
+              className={`${inputClass} resize-y`}
+            />
+          </div>
+        </div>
+
+        {/* Form Actions */}
+        <div className="flex flex-col gap-2 border-t pt-4 min-[400px]:flex-row">
           <button
             type="submit"
             disabled={saving}
-            className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 min-[400px]:w-auto"
           >
             {saving
               ? "Saving..."
@@ -267,7 +317,8 @@ export default function SupplierManagement() {
             <button
               type="button"
               onClick={resetForm}
-              className="rounded-lg border px-5 py-2.5 text-sm"
+              disabled={saving}
+              className="w-full rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 min-[400px]:w-auto"
             >
               Cancel
             </button>
@@ -275,13 +326,14 @@ export default function SupplierManagement() {
         </div>
       </form>
 
-      <div className="rounded-xl border bg-white p-5 shadow-sm">
-        <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+      {/* Supplier List */}
+      <section className="min-w-0 overflow-hidden rounded-xl border bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-4 flex min-w-0 flex-col gap-3 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-lg font-semibold text-slate-800">
+            <h2 className="text-base font-semibold text-slate-800 sm:text-lg">
               Supplier List
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
               Total Active Suppliers: {suppliers.length}
             </p>
           </div>
@@ -290,67 +342,93 @@ export default function SupplierManagement() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search suppliers..."
-            className="rounded-lg border p-2.5 text-sm sm:w-64"
+            className={`${inputClass} sm:max-w-xs`}
           />
         </div>
 
         {loading ? (
-          <p className="py-8 text-center text-slate-500">
+          <p className="py-8 text-center text-sm text-slate-500">
             Loading suppliers...
           </p>
         ) : filteredSuppliers.length === 0 ? (
-          <p className="py-8 text-center text-slate-500">
+          <p className="py-8 text-center text-sm text-slate-500">
             No suppliers found.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-600">
-                <tr>
-                  <th className="p-3">Supplier</th>
-                  <th className="p-3">Company</th>
-                  <th className="p-3">Phone</th>
-                  <th className="p-3">Email</th>
-                  <th className="p-3">Address</th>
-                  <th className="p-3">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody className="divide-y">
-                {filteredSuppliers.map((supplier) => (
-                  <tr key={supplier.id} className="hover:bg-slate-50">
-                    <td className="p-3 font-medium text-slate-800">
-                      {supplier.name}
-                    </td>
-                    <td className="p-3">{supplier.companyName || "-"}</td>
-                    <td className="p-3">{supplier.phone || "-"}</td>
-                    <td className="p-3">{supplier.email || "-"}</td>
-                    <td className="p-3">{supplier.address || "-"}</td>
-
-                    <td className="p-3">
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleEdit(supplier)}
-                          className="rounded bg-blue-50 px-3 py-1.5 text-blue-600 hover:bg-blue-100"
-                        >
-                          Edit
-                        </button>
-
-                        <button
-                          onClick={() => handleDelete(supplier.id)}
-                          className="rounded bg-red-50 px-3 py-1.5 text-red-600 hover:bg-red-100"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[850px] text-left text-sm">
+                <thead className="bg-slate-50 text-slate-600">
+                  <tr>
+                    <th className="p-3">Supplier</th>
+                    <th className="p-3">Company</th>
+                    <th className="p-3">Phone</th>
+                    <th className="p-3">Email</th>
+                    <th className="p-3">Address</th>
+                    <th className="p-3">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody className="divide-y divide-slate-100">
+                  {filteredSuppliers.map((supplier) => (
+                    <tr
+                      key={supplier.id}
+                      className="transition hover:bg-slate-50"
+                    >
+                      <td className="max-w-[180px] break-words p-3 font-medium text-slate-800">
+                        {supplier.name}
+                      </td>
+
+                      <td className="max-w-[180px] break-words p-3">
+                        {supplier.companyName || "-"}
+                      </td>
+
+                      <td className="whitespace-nowrap p-3">
+                        {supplier.phone || "-"}
+                      </td>
+
+                      <td className="max-w-[200px] break-all p-3">
+                        {supplier.email || "-"}
+                      </td>
+
+                      <td className="max-w-[200px] break-words p-3">
+                        {supplier.address || "-"}
+                      </td>
+
+                      <td className="p-3">
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleEdit(supplier)}
+                            className="rounded-lg bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-600 transition hover:bg-blue-100"
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(supplier.id)}
+                            disabled={deletingId === supplier.id}
+                            className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {deletingId === supplier.id
+                              ? "Deleting..."
+                              : "Delete"}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <p className="mt-2 text-center text-xs text-slate-400 sm:hidden">
+              Swipe horizontally to view all columns
+            </p>
+          </>
         )}
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

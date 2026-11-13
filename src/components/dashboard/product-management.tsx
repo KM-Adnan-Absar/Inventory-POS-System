@@ -47,6 +47,9 @@ const initialForm: ProductForm = {
   isActive: true,
 };
 
+const inputClass =
+  "w-full min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+
 export default function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -67,7 +70,6 @@ export default function ProductManagement() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  // Load products and categories
   async function loadProducts() {
     try {
       setLoading(true);
@@ -80,8 +82,8 @@ export default function ProductManagement() {
         throw new Error(result.message || "Failed to load products.");
       }
 
-      setProducts(result.products);
-      setCategories(result.categories);
+      setProducts(Array.isArray(result.products) ? result.products : []);
+      setCategories(Array.isArray(result.categories) ? result.categories : []);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Something went wrong."
@@ -96,7 +98,6 @@ export default function ProductManagement() {
     loadProducts();
   }, []);
 
-  // Update product form
   function updateField(
     field: keyof ProductForm,
     value: string | boolean
@@ -107,13 +108,11 @@ export default function ProductManagement() {
     }));
   }
 
-  // Reset product form
   function resetForm() {
     setForm(initialForm);
     setEditingId(null);
   }
 
-  // Create category
   async function handleCreateCategory(
     event: FormEvent<HTMLFormElement>
   ) {
@@ -138,9 +137,7 @@ export default function ProductManagement() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(
-          result.message || "Failed to create category."
-        );
+        throw new Error(result.message || "Failed to create category.");
       }
 
       setMessage(result.message);
@@ -157,7 +154,6 @@ export default function ProductManagement() {
     }
   }
 
-  // Edit product
   function handleEdit(product: Product) {
     setEditingId(product.id);
 
@@ -182,7 +178,6 @@ export default function ProductManagement() {
     });
   }
 
-  // Create or update product
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -235,7 +230,6 @@ export default function ProductManagement() {
     }
   }
 
-  // Soft delete product
   async function handleDelete(id: number) {
     const confirmed = window.confirm(
       "Are you sure you want to deactivate this product?"
@@ -274,63 +268,60 @@ export default function ProductManagement() {
     }
   }
 
-  // Search products
   const filteredProducts = products.filter((product) => {
     const search = searchValue.toLowerCase();
 
     return (
       product.name.toLowerCase().includes(search) ||
       product.sku.toLowerCase().includes(search) ||
-      product.category.name.toLowerCase().includes(search)
+      (product.category?.name ?? "").toLowerCase().includes(search)
     );
   });
 
   return (
-    <main className="space-y-6">
-
+    <main className="min-w-0 space-y-5 sm:space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">
+      <div className="min-w-0">
+        <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
           Product Management
         </h1>
 
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-xs text-slate-500 sm:text-sm">
           Create, update and manage your store products and categories.
         </p>
       </div>
 
       {/* Messages */}
       {message && (
-        <div className="rounded-lg bg-green-50 p-3 text-sm text-green-700">
+        <div className="break-words rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
           {message}
         </div>
       )}
 
       {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">
+        <div className="break-words rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
       {/* Category Management */}
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-
-        <div className="mb-5">
-          <h2 className="text-lg font-semibold text-slate-900">
+      <section className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-4 sm:mb-5">
+          <h2 className="text-base font-semibold text-slate-900 sm:text-lg">
             Category Management
           </h2>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-xs text-slate-500 sm:text-sm">
             Create categories before adding products.
           </p>
         </div>
 
         <form
           onSubmit={handleCreateCategory}
-          className="grid gap-4 sm:grid-cols-2"
+          className="grid min-w-0 gap-4 sm:grid-cols-2"
         >
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Category Name *
             </label>
 
@@ -341,22 +332,20 @@ export default function ProductManagement() {
               value={categoryName}
               onChange={(e) => setCategoryName(e.target.value)}
               placeholder="e.g. Electronics"
-              className="w-full rounded-lg border p-2.5 text-sm"
+              className={inputClass}
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Description
             </label>
 
             <input
               value={categoryDescription}
-              onChange={(e) =>
-                setCategoryDescription(e.target.value)
-              }
+              onChange={(e) => setCategoryDescription(e.target.value)}
               placeholder="Optional description"
-              className="w-full rounded-lg border p-2.5 text-sm"
+              className={inputClass}
             />
           </div>
 
@@ -364,7 +353,7 @@ export default function ProductManagement() {
             <button
               type="submit"
               disabled={categorySaving}
-              className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="w-full rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {categorySaving ? "Creating..." : "Create Category"}
             </button>
@@ -372,7 +361,7 @@ export default function ProductManagement() {
         </form>
 
         {/* Category List */}
-        <div className="mt-6 border-t pt-5">
+        <div className="mt-5 border-t border-slate-100 pt-4 sm:mt-6 sm:pt-5">
           <h3 className="mb-3 text-sm font-semibold text-slate-700">
             Available Categories ({categories.length})
           </h3>
@@ -381,7 +370,7 @@ export default function ProductManagement() {
             {categories.map((category) => (
               <span
                 key={category.id}
-                className="rounded-full bg-indigo-50 px-3 py-1.5 text-sm text-indigo-700"
+                className="max-w-full break-words rounded-full bg-indigo-50 px-3 py-1.5 text-xs text-indigo-700 sm:text-sm"
               >
                 {category.name}
               </span>
@@ -397,23 +386,20 @@ export default function ProductManagement() {
       </section>
 
       {/* Product Form */}
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-
-        <div className="mb-5">
-          <h2 className="text-lg font-semibold text-slate-900">
+      <section className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-4 sm:mb-5">
+          <h2 className="text-base font-semibold text-slate-900 sm:text-lg">
             {editingId !== null ? "Edit Product" : "Add New Product"}
           </h2>
 
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="mt-1 text-xs text-slate-500 sm:text-sm">
             Enter product information below.
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2">
-
-          {/* Product Name */}
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+        <form onSubmit={handleSubmit} className="grid min-w-0 gap-4 sm:grid-cols-2">
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Product Name *
             </label>
 
@@ -422,14 +408,13 @@ export default function ProductManagement() {
               minLength={2}
               value={form.name}
               onChange={(e) => updateField("name", e.target.value)}
-              className="w-full rounded-lg border p-2.5 text-sm"
+              className={inputClass}
               placeholder="Enter product name"
             />
           </div>
 
-          {/* SKU */}
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               SKU *
             </label>
 
@@ -437,28 +422,26 @@ export default function ProductManagement() {
               required
               value={form.sku}
               onChange={(e) => updateField("sku", e.target.value)}
-              className="w-full rounded-lg border p-2.5 text-sm"
+              className={inputClass}
               placeholder="e.g. PRD-001"
             />
           </div>
 
-          {/* Barcode */}
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Barcode
             </label>
 
             <input
               value={form.barcode}
               onChange={(e) => updateField("barcode", e.target.value)}
-              className="w-full rounded-lg border p-2.5 text-sm"
+              className={inputClass}
               placeholder="Optional barcode"
             />
           </div>
 
-          {/* Category */}
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Category *
             </label>
 
@@ -466,7 +449,7 @@ export default function ProductManagement() {
               required
               value={form.categoryId}
               onChange={(e) => updateField("categoryId", e.target.value)}
-              className="w-full rounded-lg border bg-white p-2.5 text-sm"
+              className={inputClass}
             >
               <option value="">Select category</option>
 
@@ -478,9 +461,8 @@ export default function ProductManagement() {
             </select>
           </div>
 
-          {/* Cost Price */}
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Cost Price (৳) *
             </label>
 
@@ -491,14 +473,13 @@ export default function ProductManagement() {
               step="0.01"
               value={form.costPrice}
               onChange={(e) => updateField("costPrice", e.target.value)}
-              className="w-full rounded-lg border p-2.5 text-sm"
+              className={inputClass}
               placeholder="0.00"
             />
           </div>
 
-          {/* Selling Price */}
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Selling Price (৳) *
             </label>
 
@@ -509,14 +490,13 @@ export default function ProductManagement() {
               step="0.01"
               value={form.sellingPrice}
               onChange={(e) => updateField("sellingPrice", e.target.value)}
-              className="w-full rounded-lg border p-2.5 text-sm"
+              className={inputClass}
               placeholder="0.00"
             />
           </div>
 
-          {/* Reorder Level */}
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Reorder Level
             </label>
 
@@ -527,28 +507,26 @@ export default function ProductManagement() {
               step="1"
               value={form.reorderLevel}
               onChange={(e) => updateField("reorderLevel", e.target.value)}
-              className="w-full rounded-lg border p-2.5 text-sm"
+              className={inputClass}
             />
           </div>
 
-          {/* Active Status */}
-          <div className="flex items-center gap-2 pt-6">
+          <div className="flex min-w-0 items-center gap-2 sm:pt-7">
             <input
               id="isActive"
               type="checkbox"
               checked={form.isActive}
               onChange={(e) => updateField("isActive", e.target.checked)}
-              className="h-4 w-4"
+              className="h-4 w-4 shrink-0 rounded border-slate-300"
             />
 
-            <label htmlFor="isActive" className="text-sm">
+            <label htmlFor="isActive" className="text-sm text-slate-700">
               Active Product
             </label>
           </div>
 
-          {/* Description */}
-          <div className="sm:col-span-2">
-            <label className="mb-1 block text-sm font-medium">
+          <div className="min-w-0 sm:col-span-2">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Description
             </label>
 
@@ -556,17 +534,17 @@ export default function ProductManagement() {
               rows={3}
               value={form.description}
               onChange={(e) => updateField("description", e.target.value)}
-              className="w-full rounded-lg border p-2.5 text-sm"
+              className={inputClass}
               placeholder="Product description..."
             />
           </div>
 
           {/* Buttons */}
-          <div className="flex gap-3 sm:col-span-2">
+          <div className="flex flex-col gap-2 border-t border-slate-100 pt-4 sm:col-span-2 sm:flex-row sm:gap-3">
             <button
               type="submit"
               disabled={saving || categories.length === 0}
-              className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              className="w-full rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               {saving
                 ? "Saving..."
@@ -579,7 +557,7 @@ export default function ProductManagement() {
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-lg border px-5 py-2.5 text-sm"
+                className="w-full rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 sm:w-auto"
               >
                 Cancel
               </button>
@@ -588,82 +566,82 @@ export default function ProductManagement() {
         </form>
 
         {categories.length === 0 && !loading && (
-          <p className="mt-4 text-sm text-orange-600">
+          <p className="mt-4 rounded-lg bg-orange-50 p-3 text-xs text-orange-700 sm:text-sm">
             No categories found. Create a category before adding a product.
           </p>
         )}
       </section>
 
       {/* Product List */}
-      <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-
-        <div className="mb-5 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">
+      <section className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div className="mb-4 flex min-w-0 flex-col justify-between gap-3 sm:mb-5 sm:flex-row sm:items-center">
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-slate-900 sm:text-lg">
               Product List ({filteredProducts.length})
             </h2>
 
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
               View and manage all your products.
             </p>
           </div>
 
-          {/* Search */}
           <input
             type="search"
             value={searchValue}
             onChange={(e) => setSearchValue(e.target.value)}
             placeholder="Search name, SKU, category..."
-            className="w-full rounded-lg border p-2.5 text-sm sm:max-w-xs"
+            className={`${inputClass} sm:max-w-xs`}
           />
         </div>
 
         {loading ? (
-          <p className="py-8 text-center text-slate-500">
+          <p className="py-8 text-center text-sm text-slate-500">
             Loading products...
           </p>
         ) : filteredProducts.length === 0 ? (
-          <p className="py-8 text-center text-slate-500">
+          <p className="py-8 text-center text-sm text-slate-500">
             No products found.
           </p>
         ) : (
-          <div className="overflow-x-auto">
+          <div className="-mx-4 overflow-x-auto sm:mx-0">
             <table className="w-full min-w-[750px] text-left text-sm">
               <thead>
                 <tr className="border-b bg-slate-50 text-xs text-slate-500">
-                  <th className="p-3">Product</th>
-                  <th className="p-3">SKU</th>
-                  <th className="p-3">Category</th>
-                  <th className="p-3">Cost</th>
-                  <th className="p-3">Selling</th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3">Actions</th>
+                  <th className="whitespace-nowrap p-3">Product</th>
+                  <th className="whitespace-nowrap p-3">SKU</th>
+                  <th className="whitespace-nowrap p-3">Category</th>
+                  <th className="whitespace-nowrap p-3">Cost</th>
+                  <th className="whitespace-nowrap p-3">Selling</th>
+                  <th className="whitespace-nowrap p-3">Status</th>
+                  <th className="whitespace-nowrap p-3">Actions</th>
                 </tr>
               </thead>
 
               <tbody>
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} className="border-b last:border-0 hover:bg-slate-50">
-
-                    <td className="p-3 font-medium text-slate-900">
+                  <tr
+                    key={product.id}
+                    className="border-b last:border-0 hover:bg-slate-50"
+                  >
+                    <td className="max-w-[220px] break-words p-3 font-medium text-slate-900">
                       {product.name}
                     </td>
 
-                    <td className="p-3">{product.sku}</td>
+                    <td className="whitespace-nowrap p-3">{product.sku}</td>
 
-                    <td className="p-3">
+                    <td className="whitespace-nowrap p-3">
                       {product.category?.name ?? "Uncategorized"}
                     </td>
 
-                    <td className="p-3">
+                    <td className="whitespace-nowrap p-3">
                       ৳{product.costPrice}
                     </td>
 
-                    <td className="p-3">
+                    <td className="whitespace-nowrap p-3">
                       ৳{product.sellingPrice}
                     </td>
 
-                    <td className="p-3">
+                    <td className="whitespace-nowrap p-3">
                       <span
                         className={`rounded-full px-2 py-1 text-xs ${
                           product.isActive
@@ -675,12 +653,12 @@ export default function ProductManagement() {
                       </span>
                     </td>
 
-                    <td className="p-3">
-                      <div className="flex gap-3">
+                    <td className="whitespace-nowrap p-3">
+                      <div className="flex items-center gap-3">
                         <button
                           type="button"
                           onClick={() => handleEdit(product)}
-                          className="font-medium text-blue-600"
+                          className="font-medium text-blue-600 hover:text-blue-800"
                         >
                           Edit
                         </button>
@@ -689,7 +667,7 @@ export default function ProductManagement() {
                           type="button"
                           disabled={deletingId === product.id}
                           onClick={() => handleDelete(product.id)}
-                          className="font-medium text-red-600 disabled:opacity-50"
+                          className="font-medium text-red-600 hover:text-red-800 disabled:opacity-50"
                         >
                           {deletingId === product.id ? "Deleting..." : "Delete"}
                         </button>
@@ -700,6 +678,12 @@ export default function ProductManagement() {
               </tbody>
             </table>
           </div>
+        )}
+
+        {!loading && filteredProducts.length > 0 && (
+          <p className="mt-2 text-center text-xs text-slate-400 sm:hidden">
+            Swipe horizontally to view all columns
+          </p>
         )}
       </section>
     </main>

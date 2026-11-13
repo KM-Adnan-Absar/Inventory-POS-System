@@ -18,6 +18,9 @@ type Expense = {
 
 const paymentMethods = ["CASH", "CARD", "BKASH", "NAGAD", "ROCKET"];
 
+const inputClass =
+  "w-full min-w-0 rounded-lg border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100";
+
 export default function ExpenseManagement() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +43,7 @@ export default function ExpenseManagement() {
         throw new Error(data.message || "Failed to fetch expenses.");
       }
 
-      setExpenses(data.expenses || []);
+      setExpenses(Array.isArray(data.expenses) ? data.expenses : []);
     } catch (error) {
       console.error(error);
       alert("Failed to load expenses.");
@@ -110,20 +113,23 @@ export default function ExpenseManagement() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-5 sm:space-y-6">
+      {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-800">
+        <h1 className="text-xl font-bold text-slate-800 sm:text-2xl">
           Expense Management
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-xs text-slate-500 sm:text-sm">
           Track and manage your business expenses.
         </p>
       </div>
 
       {/* Total Expense */}
-      <div className="rounded-xl border bg-white p-5 shadow-sm">
-        <p className="text-sm text-slate-500">Total Expenses</p>
-        <h2 className="mt-2 text-3xl font-bold text-red-600">
+      <div className="rounded-xl border bg-white p-4 shadow-sm sm:p-5">
+        <p className="text-xs text-slate-500 sm:text-sm">
+          Total Expenses
+        </p>
+        <h2 className="mt-2 text-2xl font-bold text-red-600 sm:text-3xl">
           ৳{totalExpense.toLocaleString("en-BD")}
         </h2>
       </div>
@@ -131,15 +137,16 @@ export default function ExpenseManagement() {
       {/* Add Expense Form */}
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 rounded-xl border bg-white p-5 shadow-sm"
+        className="space-y-4 rounded-xl border bg-white p-4 shadow-sm sm:space-y-5 sm:p-5"
       >
-        <h2 className="text-lg font-semibold text-slate-800">
+        <h2 className="text-base font-semibold text-slate-800 sm:text-lg">
           Add New Expense
         </h2>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Expense Title */}
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Expense Title
             </label>
             <input
@@ -147,19 +154,20 @@ export default function ExpenseManagement() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Electricity Bill"
-              className="w-full rounded-lg border px-3 py-2"
+              className={inputClass}
               required
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+          {/* Category */}
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Category
             </label>
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full rounded-lg border px-3 py-2"
+              className={inputClass}
             >
               <option value="Utilities">Utilities</option>
               <option value="Rent">Rent</option>
@@ -172,8 +180,9 @@ export default function ExpenseManagement() {
             </select>
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+          {/* Amount */}
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Amount (৳)
             </label>
             <input
@@ -183,19 +192,20 @@ export default function ExpenseManagement() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="Enter amount"
-              className="w-full rounded-lg border px-3 py-2"
+              className={inputClass}
               required
             />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-medium">
+          {/* Payment Method */}
+          <div className="min-w-0">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700">
               Payment Method
             </label>
             <select
               value={paymentMethod}
               onChange={(e) => setPaymentMethod(e.target.value)}
-              className="w-full rounded-lg border px-3 py-2"
+              className={inputClass}
             >
               {paymentMethods.map((method) => (
                 <option key={method} value={method}>
@@ -206,8 +216,9 @@ export default function ExpenseManagement() {
           </div>
         </div>
 
+        {/* Description */}
         <div>
-          <label className="mb-1 block text-sm font-medium">
+          <label className="mb-1.5 block text-sm font-medium text-slate-700">
             Description (Optional)
           </label>
           <textarea
@@ -215,63 +226,100 @@ export default function ExpenseManagement() {
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Write expense details..."
             rows={3}
-            className="w-full rounded-lg border px-3 py-2"
+            className={`${inputClass} resize-y`}
           />
         </div>
 
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={saving}
-          className="rounded-lg bg-blue-600 px-5 py-2.5 font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="w-full rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
         >
           {saving ? "Saving..." : "Add Expense"}
         </button>
       </form>
 
       {/* Expense History */}
-      <div className="overflow-hidden rounded-xl border bg-white shadow-sm">
-        <div className="border-b p-5">
-          <h2 className="text-lg font-semibold text-slate-800">
+      <div className="min-w-0 overflow-hidden rounded-xl border bg-white shadow-sm">
+        <div className="border-b p-4 sm:p-5">
+          <h2 className="text-base font-semibold text-slate-800 sm:text-lg">
             Expense History
           </h2>
+          <p className="mt-1 text-xs text-slate-500">
+            View all recorded business expenses.
+          </p>
         </div>
 
         {loading ? (
-          <p className="p-5 text-slate-500">Loading expenses...</p>
+          <p className="p-5 text-sm text-slate-500">
+            Loading expenses...
+          </p>
         ) : expenses.length === 0 ? (
-          <p className="p-5 text-slate-500">No expenses found.</p>
+          <p className="p-5 text-sm text-slate-500">
+            No expenses found.
+          </p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-600">
-                <tr>
-                  <th className="p-3">Title</th>
-                  <th className="p-3">Category</th>
-                  <th className="p-3">Amount</th>
-                  <th className="p-3">Payment</th>
-                  <th className="p-3">Date</th>
-                </tr>
-              </thead>
+          <>
+            <p className="px-4 pt-3 text-xs text-slate-400 sm:hidden">
+              Swipe horizontally to view all columns →
+            </p>
 
-              <tbody>
-                {expenses.map((expense) => (
-                  <tr key={expense.id} className="border-t">
-                    <td className="p-3 font-medium">{expense.title}</td>
-                    <td className="p-3">{expense.category}</td>
-                    <td className="p-3 font-semibold text-red-600">
-                      ৳{Number(expense.amount).toLocaleString("en-BD")}
-                    </td>
-                    <td className="p-3">{expense.paymentMethod}</td>
-                    <td className="p-3">
-                      {new Date(expense.expenseDate).toLocaleDateString(
-                        "en-GB"
-                      )}
-                    </td>
+            <div className="w-full overflow-x-auto">
+              <table className="w-full min-w-[650px] text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase text-slate-600">
+                  <tr>
+                    <th className="whitespace-nowrap p-3 sm:p-4">
+                      Title
+                    </th>
+                    <th className="whitespace-nowrap p-3 sm:p-4">
+                      Category
+                    </th>
+                    <th className="whitespace-nowrap p-3 sm:p-4">
+                      Amount
+                    </th>
+                    <th className="whitespace-nowrap p-3 sm:p-4">
+                      Payment
+                    </th>
+                    <th className="whitespace-nowrap p-3 sm:p-4">
+                      Date
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody>
+                  {expenses.map((expense) => (
+                    <tr
+                      key={expense.id}
+                      className="border-t transition hover:bg-slate-50"
+                    >
+                      <td className="max-w-[220px] truncate p-3 font-medium text-slate-800 sm:p-4">
+                        {expense.title}
+                      </td>
+
+                      <td className="whitespace-nowrap p-3 text-slate-600 sm:p-4">
+                        {expense.category}
+                      </td>
+
+                      <td className="whitespace-nowrap p-3 font-semibold text-red-600 sm:p-4">
+                        ৳{Number(expense.amount).toLocaleString("en-BD")}
+                      </td>
+
+                      <td className="whitespace-nowrap p-3 text-slate-600 sm:p-4">
+                        {expense.paymentMethod}
+                      </td>
+
+                      <td className="whitespace-nowrap p-3 text-slate-600 sm:p-4">
+                        {new Date(expense.expenseDate).toLocaleDateString(
+                          "en-GB"
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

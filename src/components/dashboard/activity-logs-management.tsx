@@ -98,27 +98,31 @@ export default function ActivityLogsManagement() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-5 sm:space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
+      <div className="flex min-w-0 flex-col justify-between gap-3 sm:flex-row sm:items-center">
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <Activity className="text-blue-600" size={25} />
+            <Activity
+              className="shrink-0 text-blue-600"
+              size={23}
+            />
 
-            <h1 className="text-2xl font-bold text-slate-900">
+            <h1 className="text-xl font-bold text-slate-900 sm:text-2xl">
               Activity Logs
             </h1>
           </div>
 
-          <p className="mt-2 text-sm text-slate-500">
+          <p className="mt-2 text-xs text-slate-500 sm:text-sm">
             Monitor user activities and system operations.
           </p>
         </div>
 
         <button
+          type="button"
           onClick={fetchActivities}
           disabled={loading}
-          className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
           <RefreshCw
             size={17}
@@ -129,18 +133,18 @@ export default function ActivityLogsManagement() {
       </div>
 
       {/* Summary Card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="rounded-lg bg-blue-50 p-3 text-blue-600">
-            <Activity size={25} />
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="shrink-0 rounded-lg bg-blue-50 p-2.5 text-blue-600 sm:p-3">
+            <Activity size={23} />
           </div>
 
-          <div>
-            <p className="text-sm text-slate-500">
+          <div className="min-w-0">
+            <p className="text-xs text-slate-500 sm:text-sm">
               Total Activities
             </p>
 
-            <h2 className="mt-1 text-2xl font-bold text-slate-900">
+            <h2 className="mt-1 text-2xl font-bold text-slate-900 sm:text-3xl">
               {activities.length}
             </h2>
 
@@ -153,16 +157,16 @@ export default function ActivityLogsManagement() {
 
       {/* Error Message */}
       {error && (
-        <div className="flex items-center gap-3 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          <AlertCircle size={20} />
-          <p>{error}</p>
+        <div className="flex min-w-0 items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 sm:p-4">
+          <AlertCircle size={20} className="mt-0.5 shrink-0" />
+          <p className="break-words">{error}</p>
         </div>
       )}
 
-      {/* Activity Table */}
-      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 p-5">
-          <h2 className="font-semibold text-slate-900">
+      {/* Activity History */}
+      <div className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 p-4 sm:p-5">
+          <h2 className="text-base font-semibold text-slate-900 sm:text-lg">
             Recent Activities
           </h2>
 
@@ -172,9 +176,9 @@ export default function ActivityLogsManagement() {
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-16">
+          <div className="flex flex-col items-center justify-center py-12 sm:py-16">
             <RefreshCw
-              size={30}
+              size={28}
               className="animate-spin text-blue-600"
             />
 
@@ -183,9 +187,9 @@ export default function ActivityLogsManagement() {
             </p>
           </div>
         ) : activities.length === 0 ? (
-          <div className="py-16 text-center">
+          <div className="px-4 py-12 text-center sm:py-16">
             <Activity
-              size={35}
+              size={32}
               className="mx-auto text-slate-300"
             />
 
@@ -193,96 +197,117 @@ export default function ActivityLogsManagement() {
               No activities found
             </h3>
 
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="mt-1 text-xs text-slate-400 sm:text-sm">
               User activities will appear here.
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
-              <thead className="bg-slate-50">
-                <tr className="border-b border-slate-200 text-xs text-slate-500">
-                  <th className="px-5 py-4 font-semibold">User</th>
-                  <th className="px-5 py-4 font-semibold">Action</th>
-                  <th className="px-5 py-4 font-semibold">Entity</th>
-                  <th className="px-5 py-4 font-semibold">Description</th>
-                  <th className="px-5 py-4 font-semibold">Date & Time</th>
-                </tr>
-              </thead>
+          <>
+            <p className="px-4 pt-3 text-xs text-slate-400 sm:hidden">
+              Swipe horizontally to view all columns →
+            </p>
 
-              <tbody>
-                {activities.map((activity) => (
-                  <tr
-                    key={activity.id}
-                    className="border-b border-slate-100 transition hover:bg-slate-50 last:border-0"
-                  >
-                    {/* User */}
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                          <UserRound size={17} />
-                        </div>
-
-                        <div>
-                          <p className="font-medium text-slate-800">
-                            {activity.user?.name || "Unknown User"}
-                          </p>
-
-                          <p className="mt-1 text-xs text-slate-400">
-                            {activity.user?.email || "No email"}
-                          </p>
-
-                          <p className="mt-1 text-xs font-medium text-slate-500">
-                            {activity.user?.role || "No role"}
-                          </p>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Action */}
-                    <td className="px-5 py-4">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1.5 text-xs font-semibold ${getActionColor(
-                          activity.action
-                        )}`}
-                      >
-                        {activity.action.replaceAll("_", " ")}
-                      </span>
-                    </td>
-
-                    {/* Entity */}
-                    <td className="px-5 py-4">
-                      <p className="font-medium text-slate-700">
-                        {activity.entity}
-                      </p>
-
-                      {activity.entityId && (
-                        <p className="mt-1 text-xs text-slate-400">
-                          ID: {activity.entityId}
-                        </p>
-                      )}
-                    </td>
-
-                    {/* Description */}
-                    <td className="max-w-xs px-5 py-4 text-slate-600">
-                      {activity.description || "No description"}
-                    </td>
-
-                    {/* Date */}
-                    <td className="whitespace-nowrap px-5 py-4">
-                      <div className="flex items-center gap-2 text-slate-600">
-                        <Clock size={15} className="text-slate-400" />
-
-                        <span className="text-xs">
-                          {formatDate(activity.createdAt)}
-                        </span>
-                      </div>
-                    </td>
+            <div className="w-full overflow-x-auto">
+              <table className="w-full min-w-[900px] text-left text-sm">
+                <thead className="bg-slate-50">
+                  <tr className="border-b border-slate-200 text-xs text-slate-500">
+                    <th className="whitespace-nowrap px-4 py-4 font-semibold sm:px-5">
+                      User
+                    </th>
+                    <th className="whitespace-nowrap px-4 py-4 font-semibold sm:px-5">
+                      Action
+                    </th>
+                    <th className="whitespace-nowrap px-4 py-4 font-semibold sm:px-5">
+                      Entity
+                    </th>
+                    <th className="whitespace-nowrap px-4 py-4 font-semibold sm:px-5">
+                      Description
+                    </th>
+                    <th className="whitespace-nowrap px-4 py-4 font-semibold sm:px-5">
+                      Date & Time
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody>
+                  {activities.map((activity) => (
+                    <tr
+                      key={activity.id}
+                      className="border-b border-slate-100 transition hover:bg-slate-50 last:border-0"
+                    >
+                      {/* User */}
+                      <td className="px-4 py-4 sm:px-5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+                            <UserRound size={17} />
+                          </div>
+
+                          <div className="min-w-0">
+                            <p className="font-medium text-slate-800">
+                              {activity.user?.name || "Unknown User"}
+                            </p>
+
+                            <p className="mt-1 text-xs text-slate-400">
+                              {activity.user?.email || "No email"}
+                            </p>
+
+                            <p className="mt-1 text-xs font-medium text-slate-500">
+                              {activity.user?.role || "No role"}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Action */}
+                      <td className="px-4 py-4 sm:px-5">
+                        <span
+                          className={`inline-flex whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold ${getActionColor(
+                            activity.action
+                          )}`}
+                        >
+                          {activity.action.replaceAll("_", " ")}
+                        </span>
+                      </td>
+
+                      {/* Entity */}
+                      <td className="px-4 py-4 sm:px-5">
+                        <p className="font-medium text-slate-700">
+                          {activity.entity}
+                        </p>
+
+                        {activity.entityId && (
+                          <p className="mt-1 text-xs text-slate-400">
+                            ID: {activity.entityId}
+                          </p>
+                        )}
+                      </td>
+
+                      {/* Description */}
+                      <td className="max-w-xs px-4 py-4 text-slate-600 sm:px-5">
+                        <p className="break-words">
+                          {activity.description || "No description"}
+                        </p>
+                      </td>
+
+                      {/* Date */}
+                      <td className="whitespace-nowrap px-4 py-4 sm:px-5">
+                        <div className="flex items-center gap-2 text-slate-600">
+                          <Clock
+                            size={15}
+                            className="shrink-0 text-slate-400"
+                          />
+
+                          <span className="text-xs">
+                            {formatDate(activity.createdAt)}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

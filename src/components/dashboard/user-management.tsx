@@ -17,6 +17,9 @@ type UserManagementProps = {
   currentUserId: string;
 };
 
+const selectClass =
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-50";
+
 export default function UserManagement({
   currentUserId,
 }: UserManagementProps) {
@@ -35,7 +38,7 @@ export default function UserManagement({
         throw new Error(data.message || "Failed to load users.");
       }
 
-      setUsers(data.users ?? []);
+      setUsers(Array.isArray(data.users) ? data.users : []);
     } catch (error) {
       console.error("FETCH USERS ERROR:", error);
       alert(
@@ -82,91 +85,157 @@ export default function UserManagement({
   }
 
   if (loading) {
-    return <p className="p-6">Loading users...</p>;
+    return (
+      <p className="p-5 text-sm text-slate-500 sm:p-6">
+        Loading users...
+      </p>
+    );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0 space-y-5 sm:space-y-6">
+      {/* Page Header */}
       <div>
-        <h2 className="text-2xl font-bold">User Management</h2>
-        <p className="text-sm text-gray-500">
+        <h1 className="text-xl font-bold text-slate-800 sm:text-2xl">
+          User Management
+        </h1>
+        <p className="mt-1 text-xs text-slate-500 sm:text-sm">
           Manage users and their access roles.
         </p>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="p-3">Name</th>
-              <th className="p-3">Email</th>
-              <th className="p-3">Role</th>
-              <th className="p-3">Created Date</th>
-              <th className="p-3">Action</th>
-            </tr>
-          </thead>
+      {/* User Count */}
+      <div className="rounded-xl border bg-white p-4 shadow-sm sm:p-5">
+        <p className="text-xs text-slate-500 sm:text-sm">
+          Total Registered Users
+        </p>
+        <h2 className="mt-1 text-2xl font-bold text-slate-800 sm:text-3xl">
+          {users.length}
+        </h2>
+      </div>
 
-          <tbody>
-            {users.map((user) => {
-              const isCurrentUser = user.id === currentUserId;
+      {/* User Table */}
+      <div className="min-w-0 overflow-hidden rounded-xl border bg-white shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b p-4 sm:p-5">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800 sm:text-lg">
+              Registered Users
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">
+              View users and manage their roles.
+            </p>
+          </div>
 
-              return (
-                <tr key={user.id} className="border-t">
-                  <td className="p-3 font-medium">{user.name}</td>
+          <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+            {users.length} Users
+          </span>
+        </div>
 
-                  <td className="p-3">{user.email}</td>
+        {users.length === 0 ? (
+          <p className="p-6 text-center text-sm text-slate-500">
+            No users found.
+          </p>
+        ) : (
+          <>
+            {/* Mobile Scroll Hint */}
+            <p className="px-4 pt-3 text-xs text-slate-400 sm:hidden">
+              Swipe horizontally to view all columns →
+            </p>
 
-                  <td className="p-3">
-                    <span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium">
-                      {user.role ?? "CASHIER"}
-                    </span>
-                  </td>
+            <div className="w-full overflow-x-auto">
+              <table className="w-full min-w-[760px] text-left text-sm">
+                <thead className="bg-slate-50 text-xs uppercase text-slate-600">
+                  <tr>
+                    <th className="whitespace-nowrap p-3 sm:p-4">
+                      Name
+                    </th>
+                    <th className="whitespace-nowrap p-3 sm:p-4">
+                      Email
+                    </th>
+                    <th className="whitespace-nowrap p-3 sm:p-4">
+                      Current Role
+                    </th>
+                    <th className="whitespace-nowrap p-3 sm:p-4">
+                      Created Date
+                    </th>
+                    <th className="whitespace-nowrap p-3 sm:p-4">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
 
-                  <td className="p-3">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </td>
+                <tbody>
+                  {users.map((user) => {
+                    const isCurrentUser = user.id === currentUserId;
 
-                  <td className="p-3">
-                    {isCurrentUser ? (
-                      <span className="text-xs text-gray-500">
-                        Your account
-                      </span>
-                    ) : (
-                      <select
-                        value={user.role ?? "CASHIER"}
-                        disabled={updatingId === user.id}
-                        onChange={(e) =>
-                          handleRoleChange(user.id, e.target.value)
-                        }
-                        className="rounded-md border px-3 py-2"
+                    return (
+                      <tr
+                        key={user.id}
+                        className="border-t transition hover:bg-slate-50"
                       >
-                        {roles.map((role) => (
-                          <option key={role} value={role}>
-                            {role}
-                          </option>
-                        ))}
-                      </select>
-                    )}
+                        <td className="whitespace-nowrap p-3 font-medium text-slate-800 sm:p-4">
+                          {user.name}
+                          {isCurrentUser && (
+                            <span className="ml-2 rounded bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700">
+                              You
+                            </span>
+                          )}
+                        </td>
 
-                    {updatingId === user.id && (
-                      <span className="ml-2 text-xs text-gray-500">
-                        Updating...
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+                        <td className="whitespace-nowrap p-3 text-slate-600 sm:p-4">
+                          {user.email}
+                        </td>
 
-            {users.length === 0 && (
-              <tr>
-                <td colSpan={5} className="p-6 text-center text-gray-500">
-                  No users found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                        <td className="whitespace-nowrap p-3 sm:p-4">
+                          <span className="inline-block rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                            {user.role ?? "CASHIER"}
+                          </span>
+                        </td>
+
+                        <td className="whitespace-nowrap p-3 text-slate-600 sm:p-4">
+                          {new Date(user.createdAt).toLocaleDateString(
+                            "en-GB"
+                          )}
+                        </td>
+
+                        <td className="p-3 sm:p-4">
+                          {isCurrentUser ? (
+                            <span className="text-xs font-medium text-slate-500">
+                              Your account
+                            </span>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={user.role ?? "CASHIER"}
+                                disabled={updatingId === user.id}
+                                onChange={(e) =>
+                                  handleRoleChange(user.id, e.target.value)
+                                }
+                                className={selectClass}
+                              >
+                                {roles.map((role) => (
+                                  <option key={role} value={role}>
+                                    {role}
+                                  </option>
+                                ))}
+                              </select>
+
+                              {updatingId === user.id && (
+                                <span className="whitespace-nowrap text-xs text-blue-600">
+                                  Updating...
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

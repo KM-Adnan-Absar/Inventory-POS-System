@@ -1,8 +1,9 @@
 
 "use client";
 
-import { useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Package,
@@ -13,33 +14,30 @@ import {
   Settings,
   Menu,
   X,
-  Search,
   Bell,
-  TrendingUp,
-  TrendingDown,
   DollarSign,
-  Boxes,
-  AlertTriangle,
-  Receipt,
   Wallet,
   History,
+  AlertTriangle,
+  CheckCircle2,
+  RefreshCw,
 } from "lucide-react";
-import {
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-} from "recharts";
 import LogoutButton from "../../components/logout-button";
 
 type DashboardShellProps = {
   name: string;
   email: string;
   role: string;
+  children: ReactNode;
 };
+
+interface LowStockProduct {
+  id: number;
+  name: string;
+  sku: string;
+  stock: number;
+  reorderLevel: number;
+}
 
 const navigation = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -56,28 +54,7 @@ const navigation = [
   { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
-const salesData = [
-  { day: "Mon", sales: 1200 },
-  { day: "Tue", sales: 2100 },
-  { day: "Wed", sales: 1800 },
-  { day: "Thu", sales: 2800 },
-  { day: "Fri", sales: 2400 },
-  { day: "Sat", sales: 3500 },
-  { day: "Sun", sales: 3100 },
-];
-
-const transactions = [
-  { id: "SP-1001", customer: "Rahim Ahmed", amount: 4500, status: "Completed" },
-  { id: "SP-1002", customer: "Karim Hasan", amount: 2800, status: "Pending" },
-  { id: "SP-1003", customer: "Nusrat Jahan", amount: 6200, status: "Completed" },
-  { id: "SP-1004", customer: "Sabbir Hossain", amount: 1500, status: "Completed" },
-];
-
-const lowStockItems = [
-  { name: "Wireless Mouse", sku: "PRD-001", stock: 3 },
-  { name: "Keyboard", sku: "PRD-002", stock: 2 },
-  { name: "USB Cable", sku: "PRD-003", stock: 4 },
-];
+// Sidebar
 
 function Sidebar({
   open,
@@ -88,6 +65,8 @@ function Sidebar({
   close: () => void;
   role: string;
 }) {
+  const pathname = usePathname();
+
   const filteredNavigation = navigation.filter((item) => {
     if (
       item.label === "User Management" ||
@@ -105,24 +84,32 @@ function Sidebar({
         <button
           aria-label="Close sidebar overlay"
           onClick={close}
-          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+          className="fixed inset-0 z-[64] bg-black/40"
         />
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-slate-950 text-white transition-transform lg:translate-x-0 ${
+        aria-label="Dashboard navigation"
+        className={`fixed inset-y-0 left-0 z-[65] flex w-[min(280px,85vw)] flex-col bg-slate-950 text-white shadow-xl transition-transform duration-300 ${
           open ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex h-20 items-center justify-between border-b border-slate-800 px-6">
+        <div className="flex h-20 shrink-0 items-center justify-between border-b border-slate-800 px-5 sm:px-6">
           <div>
             <h1 className="text-2xl font-bold tracking-wide">
               Stock<span className="text-blue-400">Pilot</span>
             </h1>
-            <p className="text-xs text-slate-400">Inventory Management</p>
+
+            <p className="text-xs text-slate-400">
+              Inventory Management
+            </p>
           </div>
 
-          <button onClick={close} className="lg:hidden" aria-label="Close menu">
+          <button
+            onClick={close}
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-800 hover:text-white"
+            aria-label="Close menu"
+          >
             <X size={22} />
           </button>
         </div>
@@ -132,27 +119,38 @@ function Sidebar({
             Main Menu
           </p>
 
-          {filteredNavigation.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              onClick={close}
-              className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm transition ${
-                item.label === "Dashboard"
-                  ? "bg-blue-600 text-white"
-                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
-              }`}
-            >
-              <item.icon size={19} />
-              {item.label}
-            </Link>
-          ))}
+          {filteredNavigation.map((item) => {
+            const active =
+              item.href === "/dashboard"
+                ? pathname === "/dashboard"
+                : pathname === item.href ||
+                  pathname.startsWith(`${item.href}/`);
+
+            return (
+              <Link
+                key={item.label}
+                href={item.href}
+                onClick={close}
+                className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm transition ${
+                  active
+                    ? "bg-blue-600 text-white"
+                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                }`}
+              >
+                <item.icon size={19} />
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
-        <div className="border-t border-slate-800 p-4">
+        <div className="shrink-0 border-t border-slate-800 p-4">
           <div className="rounded-lg bg-slate-900 p-3">
             <p className="text-sm font-medium">StockPilot v1.0</p>
-            <p className="mt-1 text-xs text-slate-400">Inventory made simple</p>
+
+            <p className="mt-1 text-xs text-slate-400">
+              Inventory made simple
+            </p>
           </div>
         </div>
       </aside>
@@ -160,276 +158,385 @@ function Sidebar({
   );
 }
 
-function SummaryCard({
-  title,
-  value,
-  change,
-  icon: Icon,
-  positive = true,
+// Notification Dropdown
+
+function NotificationDropdown({
+  products,
+  loading,
+  error,
+  refresh,
+  onClose,
 }: {
-  title: string;
-  value: string;
-  change: string;
-  icon: React.ElementType;
-  positive?: boolean;
+  products: LowStockProduct[];
+  loading: boolean;
+  error: string;
+  refresh: () => void;
+  onClose: () => void;
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex items-center justify-between">
-        <p className="text-sm font-medium text-slate-500">{title}</p>
-        <div className="rounded-lg bg-blue-50 p-3 text-blue-600">
-          <Icon size={21} />
+    <div className="fixed right-3 top-[72px] z-[70] w-[min(340px,calc(100vw-24px))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl sm:absolute sm:right-0 sm:top-12 sm:w-[340px]">
+      <div className="flex items-center justify-between border-b border-slate-100 px-4 py-4">
+        <div>
+          <h3 className="font-semibold text-slate-900">
+            Notifications
+          </h3>
+
+          <p className="mt-1 text-xs text-slate-500">
+            Stock alerts and updates
+          </p>
         </div>
+
+        <button
+          onClick={refresh}
+          disabled={loading}
+          aria-label="Refresh notifications"
+          className="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 disabled:opacity-50"
+        >
+          <RefreshCw
+            size={17}
+            className={loading ? "animate-spin" : ""}
+          />
+        </button>
       </div>
 
-      <h2 className="mt-4 text-2xl font-bold text-slate-900">{value}</h2>
+      <div className="max-h-[min(350px,55vh)] overflow-y-auto">
+        {loading && products.length === 0 ? (
+          <div className="px-4 py-10 text-center text-sm text-slate-400">
+            Loading notifications...
+          </div>
+        ) : error ? (
+          <div className="px-4 py-8 text-center">
+            <AlertTriangle
+              size={25}
+              className="mx-auto mb-2 text-red-500"
+            />
 
-      <div className="mt-2 flex items-center gap-1 text-xs">
-        {positive ? (
-          <TrendingUp size={15} className="text-green-600" />
+            <p className="text-sm text-red-500">{error}</p>
+
+            <button
+              onClick={refresh}
+              className="mt-3 text-xs font-medium text-blue-600"
+            >
+              Try again
+            </button>
+          </div>
+        ) : products.length === 0 ? (
+          <div className="px-4 py-10 text-center">
+            <CheckCircle2
+              size={30}
+              className="mx-auto mb-3 text-green-500"
+            />
+
+            <p className="text-sm font-medium text-slate-800">
+              All caught up!
+            </p>
+
+            <p className="mt-1 text-xs text-slate-400">
+              No low stock notifications.
+            </p>
+          </div>
         ) : (
-          <TrendingDown size={15} className="text-red-600" />
+          <div>
+            <div className="border-b border-slate-100 bg-orange-50 px-4 py-2">
+              <p className="text-xs font-semibold text-orange-700">
+                {products.length} Low Stock Alert
+                {products.length !== 1 ? "s" : ""}
+              </p>
+            </div>
+
+            {products.map((product) => (
+              <div
+                key={product.id}
+                className="flex gap-3 border-b border-slate-100 px-4 py-4 last:border-0"
+              >
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-50 text-orange-600">
+                  <AlertTriangle size={18} />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-800">
+                    {product.name}
+                  </p>
+
+                  <p className="mt-1 text-xs text-slate-400">
+                    SKU: {product.sku}
+                  </p>
+
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="rounded bg-red-50 px-2 py-1 text-xs font-semibold text-red-600">
+                      Stock: {product.stock}
+                    </span>
+
+                    <span className="text-xs text-slate-400">
+                      Reorder: {product.reorderLevel}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         )}
-        <span className={positive ? "text-green-600" : "text-red-600"}>
-          {change}
-        </span>
-        <span className="text-slate-400">from last month</span>
+      </div>
+
+      <div className="border-t border-slate-100 p-3">
+        <Link
+          href="/dashboard/products"
+          onClick={onClose}
+          className="block rounded-lg bg-blue-50 px-3 py-2.5 text-center text-sm font-medium text-blue-600 transition hover:bg-blue-100"
+        >
+          Manage Products
+        </Link>
       </div>
     </div>
   );
 }
 
-function SalesOverview() {
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h2 className="font-semibold text-slate-900">Sales Overview</h2>
-          <p className="mt-1 text-xs text-slate-500">Weekly sales performance</p>
-        </div>
-        <span className="rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-600">
-          This Week
-        </span>
-      </div>
-
-      <div className="h-72 w-full">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={salesData}>
-            <defs>
-              <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#2563eb" stopOpacity={0.25} />
-                <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="day" axisLine={false} tickLine={false} />
-            <YAxis axisLine={false} tickLine={false} />
-            <Tooltip />
-            <Area
-              type="monotone"
-              dataKey="sales"
-              stroke="#2563eb"
-              strokeWidth={3}
-              fill="url(#salesGradient)"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-    </section>
-  );
-}
-
-function RecentTransactions() {
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <h2 className="font-semibold text-slate-900">Recent Transactions</h2>
-          <p className="mt-1 text-xs text-slate-500">Latest sales activity</p>
-        </div>
-        <Link href="/dashboard/sales" className="text-sm font-medium text-blue-600">
-          View all
-        </Link>
-      </div>
-
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[480px] text-left text-sm">
-          <thead>
-            <tr className="border-b text-xs text-slate-500">
-              <th className="pb-3 font-medium">Invoice</th>
-              <th className="pb-3 font-medium">Customer</th>
-              <th className="pb-3 font-medium">Amount</th>
-              <th className="pb-3 font-medium">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transactions.map((item) => (
-              <tr key={item.id} className="border-b last:border-0">
-                <td className="py-4 font-medium text-slate-700">{item.id}</td>
-                <td className="py-4 text-slate-600">{item.customer}</td>
-                <td className="py-4 font-medium text-slate-800">
-                  ৳{item.amount.toLocaleString("en-BD")}
-                </td>
-                <td className="py-4">
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                      item.status === "Completed"
-                        ? "bg-green-50 text-green-700"
-                        : "bg-yellow-50 text-yellow-700"
-                    }`}
-                  >
-                    {item.status}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
-}
-
-function LowStockAlerts() {
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="mb-5 flex items-center gap-2">
-        <AlertTriangle size={19} className="text-orange-500" />
-        <h2 className="font-semibold text-slate-900">Low Stock Alerts</h2>
-      </div>
-
-      <div className="space-y-4">
-        {lowStockItems.map((item) => (
-          <div
-            key={item.sku}
-            className="flex items-center justify-between border-b border-slate-100 pb-3 last:border-0"
-          >
-            <div>
-              <p className="text-sm font-medium text-slate-800">{item.name}</p>
-              <p className="mt-1 text-xs text-slate-400">{item.sku}</p>
-            </div>
-            <span className="rounded-md bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-600">
-              {item.stock} left
-            </span>
-          </div>
-        ))}
-      </div>
-
-      <Link
-        href="/dashboard/products"
-        className="mt-4 block text-sm font-medium text-blue-600"
-      >
-        Manage inventory →
-      </Link>
-    </section>
-  );
-}
+// Dashboard Shell
 
 export default function DashboardShell({
   name,
   email,
   role,
+  children,
 }: DashboardShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [notificationOpen, setNotificationOpen] = useState(false);
+
+  const [lowStockProducts, setLowStockProducts] = useState<
+    LowStockProduct[]
+  >([]);
+
+  const [notificationLoading, setNotificationLoading] = useState(true);
+  const [notificationError, setNotificationError] = useState("");
+
+  const toggleSidebar = () => {
+    setSidebarOpen((previous) => !previous);
+  };
+
+  const closeSidebar = () => {
+    setSidebarOpen(false);
+  };
+
+  // Lock body scroll and close sidebar with Escape
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setSidebarOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [sidebarOpen]);
+
+  // Close notification dropdown with Escape
+
+  useEffect(() => {
+    if (!notificationOpen) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setNotificationOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [notificationOpen]);
+
+  // Load low stock notifications
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadNotifications() {
+      try {
+        setNotificationError("");
+
+        const response = await fetch("/api/dashboard/low-stock", {
+          cache: "no-store",
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.message || "Failed to load notifications"
+          );
+        }
+
+        if (!Array.isArray(data)) {
+          throw new Error("Invalid notification response");
+        }
+
+        if (isMounted) {
+          setLowStockProducts(data);
+        }
+      } catch (error) {
+        console.error("NOTIFICATION ERROR:", error);
+
+        if (isMounted) {
+          setNotificationError("Failed to load notifications.");
+        }
+      } finally {
+        if (isMounted) {
+          setNotificationLoading(false);
+        }
+      }
+    }
+
+    loadNotifications();
+
+    const interval = setInterval(() => {
+      loadNotifications();
+    }, 60000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Refresh notifications manually
+
+  const refreshNotifications = async () => {
+    try {
+      setNotificationLoading(true);
+      setNotificationError("");
+
+      const response = await fetch("/api/dashboard/low-stock", {
+        cache: "no-store",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Failed to load notifications"
+        );
+      }
+
+      if (!Array.isArray(data)) {
+        throw new Error("Invalid notification response");
+      }
+
+      setLowStockProducts(data);
+    } catch (error) {
+      console.error("NOTIFICATION REFRESH ERROR:", error);
+
+      setNotificationError("Failed to refresh notifications.");
+    } finally {
+      setNotificationLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50">
       <Sidebar
         open={sidebarOpen}
-        close={() => setSidebarOpen(false)}
+        close={closeSidebar}
         role={role}
       />
 
-      <div className="min-h-screen lg:pl-64">
-        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-8">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="rounded-lg p-2 text-slate-600 hover:bg-slate-100 lg:hidden"
-              aria-label="Open menu"
-            >
-              <Menu size={23} />
-            </button>
+      <header className="sticky top-0 z-[60] flex h-16 items-center justify-between border-b border-slate-200 bg-white px-3 sm:h-20 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <button
+            onClick={toggleSidebar}
+            className="shrink-0 rounded-lg p-2 text-slate-600 transition hover:bg-slate-100"
+            aria-label={
+              sidebarOpen ? "Close sidebar" : "Open sidebar"
+            }
+            aria-expanded={sidebarOpen}
+          >
+            {sidebarOpen ? <X size={23} /> : <Menu size={23} />}
+          </button>
 
-            <div>
-              <h2 className="text-lg font-semibold text-slate-900">Dashboard</h2>
-              <p className="hidden text-xs text-slate-500 sm:block">
-                Welcome back, {name}
-              </p>
-            </div>
-          </div>
+          <div className="min-w-0">
+            <h2 className="text-base font-semibold text-slate-900 sm:text-lg">
+              StockPilot
+            </h2>
 
-          <div className="flex items-center gap-3 sm:gap-5">
-            <button aria-label="Search" className="text-slate-500">
-              <Search size={20} />
-            </button>
-            <button aria-label="Notifications" className="relative text-slate-500">
-              <Bell size={20} />
-              <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500" />
-            </button>
-
-            <div className="hidden border-l border-slate-200 pl-4 sm:block">
-              <p className="text-sm font-semibold text-slate-800">{name}</p>
-              <p className="text-xs text-slate-500">{role}</p>
-            </div>
-
-            <LogoutButton />
-          </div>
-        </header>
-
-        <main className="space-y-6 p-4 sm:p-8">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900">
-              Overview
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Here is what is happening with your store today.
+            <p className="hidden truncate text-xs text-slate-500 sm:block">
+              Welcome back, {name}
             </p>
           </div>
+        </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <SummaryCard
-              title="Total Revenue"
-              value="৳ 2,45,000"
-              change="+12.5%"
-              icon={DollarSign}
-            />
-            <SummaryCard
-              title="Total Orders"
-              value="1,250"
-              change="+8.2%"
-              icon={Receipt}
-            />
-            <SummaryCard
-              title="Total Products"
-              value="485"
-              change="+4.3%"
-              icon={Boxes}
-            />
-            <SummaryCard
-              title="Low Stock Items"
-              value="12"
-              change="-2.1%"
-              icon={AlertTriangle}
-              positive={false}
-            />
+        <div className="flex shrink-0 items-center gap-1 sm:gap-3 lg:gap-5">
+          {/* Notification Bell */}
+
+          <div className="relative">
+            <button
+              onClick={() => {
+                setNotificationOpen((previous) => !previous);
+              }}
+              aria-label="Notifications"
+              aria-expanded={notificationOpen}
+              className={`relative rounded-lg p-2 transition ${
+                notificationOpen
+                  ? "bg-blue-50 text-blue-600"
+                  : "text-slate-500 hover:bg-slate-100"
+              }`}
+            >
+              <Bell size={20} />
+
+              {lowStockProducts.length > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {lowStockProducts.length > 99
+                    ? "99+"
+                    : lowStockProducts.length}
+                </span>
+              )}
+            </button>
+
+            {notificationOpen && (
+              <NotificationDropdown
+                products={lowStockProducts}
+                loading={notificationLoading}
+                error={notificationError}
+                refresh={refreshNotifications}
+                onClose={() => setNotificationOpen(false)}
+              />
+            )}
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-3">
-            <div className="xl:col-span-2">
-              <SalesOverview />
-            </div>
-            <LowStockAlerts />
+          <div className="hidden border-l border-slate-200 pl-3 sm:block lg:pl-4">
+            <p className="max-w-36 truncate text-sm font-semibold text-slate-800">
+              {name}
+            </p>
+
+            <p className="text-xs text-slate-500">{role}</p>
           </div>
 
-          <RecentTransactions />
+          <div className="shrink-0">
+            <LogoutButton />
+          </div>
+        </div>
+      </header>
 
-          <footer className="flex flex-col justify-between gap-2 border-t border-slate-200 pt-5 text-xs text-slate-400 sm:flex-row">
-            <p>© 2026 StockPilot. All rights reserved.</p>
-            <p>{email}</p>
-          </footer>
-        </main>
-      </div>
+      <main className="min-h-[calc(100vh-64px)] p-3 sm:min-h-[calc(100vh-80px)] sm:p-6 lg:p-8">
+        {children}
+
+        <footer className="mt-8 flex flex-col justify-between gap-2 border-t border-slate-200 pt-5 text-xs text-slate-400 sm:flex-row sm:items-center">
+          <p>© 2026 StockPilot. All rights reserved.</p>
+
+          <p className="break-all sm:text-right">{email}</p>
+        </footer>
+      </main>
     </div>
   );
 }
